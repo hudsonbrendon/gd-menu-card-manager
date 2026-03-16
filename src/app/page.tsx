@@ -1,65 +1,88 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
+import { Toolbar } from "@/components/game-list/toolbar";
+import { GameTable } from "@/components/game-list/game-table";
+import { DriveSelector } from "@/components/drive/drive-selector";
+import { ProgressDialog } from "@/components/dialogs/progress-dialog";
+import { GameInfoPanel } from "@/components/game-list/game-info-panel";
+import { ToolbarTutorial } from "@/components/tutorial/toolbar-tutorial";
+import { DriveTutorial } from "@/components/tutorial/drive-tutorial";
+import { useGameStore } from "@/store/game-store";
+import { useSettingsStore } from "@/store/settings-store";
 
 export default function Home() {
+  const { items, error, setError } = useGameStore();
+  const { initFromStorage } = useSettingsStore();
+  const hasItems = items.length > 0;
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+
+  useEffect(() => {
+    initFromStorage();
+  }, [initFromStorage]);
+
+  // Auto-select first item when items change
+  useEffect(() => {
+    if (items.length > 0 && !selectedItemId) {
+      setSelectedItemId(items[0].id);
+    }
+  }, [items, selectedItemId]);
+
+  const selectedItem = items.find((i) => i.id === selectedItemId) || null;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="flex h-screen flex-col bg-gd-bg font-mono">
+      <Header />
+
+      {hasItems ? (
+        <>
+          <Toolbar />
+          <ToolbarTutorial />
+          <main className="relative flex-1 flex overflow-hidden">
+            <div className="absolute inset-0 dc-scanlines z-50 pointer-events-none" />
+
+            {/* Left panel - Game list */}
+            <div className="flex-1 flex flex-col overflow-hidden border-r border-gd-border">
+              <GameTable
+                selectedItemId={selectedItemId}
+                onSelectItem={setSelectedItemId}
+              />
+            </div>
+
+            {/* Right panel - Game info */}
+            <div className="w-[320px] flex-shrink-0 flex flex-col overflow-hidden">
+              <GameInfoPanel item={selectedItem} />
+            </div>
+          </main>
+        </>
+      ) : (
+        <main className="relative flex-1 overflow-hidden flex flex-col">
+          <div className="absolute inset-0 dc-scanlines z-50 pointer-events-none" />
+          <div className="relative z-0 flex-1 flex flex-col overflow-hidden">
+            <DriveSelector />
+            <DriveTutorial />
+          </div>
+        </main>
+      )}
+
+      <Footer />
+      <ProgressDialog />
+
+      {error && (
+        <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[60]">
+          <div className="flex items-center gap-2 rounded border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-400 shadow-lg backdrop-blur-sm font-mono">
+            <span>{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="ml-2 font-bold hover:opacity-70 transition-opacity"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              x
+            </button>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      )}
     </div>
   );
 }

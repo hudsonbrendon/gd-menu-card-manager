@@ -38,6 +38,14 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-dc-orange: var(--dc-orange);
+  --color-dc-blue: var(--dc-blue);
+  --color-dc-red: var(--dc-red);
+  --color-gd-bg: var(--gd-bg);
+  --color-gd-border: var(--gd-border);
+  --color-gd-text: var(--gd-text);
+  --color-gd-highlight: var(--gd-highlight);
+  --color-gd-dim: var(--gd-dim);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -48,72 +56,83 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --dc-orange: #e86117;
+  --dc-blue: #1a3a5c;
+  --dc-red: #c4371b;
+
+  /* GDmenu color palette */
+  --gd-bg: #0c1e2e;
+  --gd-border: #1a4a5a;
+  --gd-text: #8cc8d8;
+  --gd-highlight: #2a5a6a;
+  --gd-dim: #4a8898;
+
+  --background: #0c1e2e;
+  --foreground: #8cc8d8;
+  --card: #0f2538;
+  --card-foreground: #8cc8d8;
+  --popover: #0f2538;
+  --popover-foreground: #8cc8d8;
+  --primary: #8cc8d8;
+  --primary-foreground: #0c1e2e;
+  --secondary: #1a3a4a;
+  --secondary-foreground: #8cc8d8;
+  --muted: #1a3a4a;
+  --muted-foreground: #4a8898;
+  --accent: #1a4a5a;
+  --accent-foreground: #8cc8d8;
+  --destructive: #cc4444;
+  --border: #1a4a5a;
+  --input: #1a4a5a;
+  --ring: #8cc8d8;
+  --chart-1: #8cc8d8;
+  --chart-2: #4a8898;
+  --chart-3: #6ab8c8;
+  --chart-4: #3a6878;
+  --chart-5: #2a5868;
+  --radius: 0.25rem;
+  --sidebar: #0c1e2e;
+  --sidebar-foreground: #8cc8d8;
+  --sidebar-primary: #8cc8d8;
+  --sidebar-primary-foreground: #0c1e2e;
+  --sidebar-accent: #1a3a4a;
+  --sidebar-accent-foreground: #8cc8d8;
+  --sidebar-border: #1a4a5a;
+  --sidebar-ring: #8cc8d8;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #0c1e2e;
+  --foreground: #8cc8d8;
+  --card: #0f2538;
+  --card-foreground: #8cc8d8;
+  --popover: #0f2538;
+  --popover-foreground: #8cc8d8;
+  --primary: #8cc8d8;
+  --primary-foreground: #0c1e2e;
+  --secondary: #1a3a4a;
+  --secondary-foreground: #8cc8d8;
+  --muted: #1a3a4a;
+  --muted-foreground: #4a8898;
+  --accent: #1a4a5a;
+  --accent-foreground: #8cc8d8;
+  --destructive: #cc4444;
+  --border: #1a4a5a;
+  --input: #1a4a5a;
+  --ring: #8cc8d8;
+  --chart-1: #8cc8d8;
+  --chart-2: #4a8898;
+  --chart-3: #6ab8c8;
+  --chart-4: #3a6878;
+  --chart-5: #2a5868;
+  --sidebar: #0c1e2e;
+  --sidebar-foreground: #8cc8d8;
+  --sidebar-primary: #8cc8d8;
+  --sidebar-primary-foreground: #0c1e2e;
+  --sidebar-accent: #1a3a4a;
+  --sidebar-accent-foreground: #8cc8d8;
+  --sidebar-border: #1a4a5a;
+  --sidebar-ring: #8cc8d8;
 }
 
 @layer base {
@@ -124,6 +143,61 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans;
+    @apply font-mono;
   }
+}
+
+/* Dreamcast swirl animation */
+@keyframes dc-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes dc-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+.dc-swirl-spin {
+  animation: dc-spin 8s linear infinite;
+}
+
+.dc-glow-pulse {
+  animation: dc-pulse 3s ease-in-out infinite;
+}
+
+/* Scanline overlay for retro CRT feel */
+.dc-scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  pointer-events: none;
+}
+
+/* GDmenu scrollbar */
+.dc-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.dc-scrollbar::-webkit-scrollbar-track {
+  background: #0c1e2e;
+}
+.dc-scrollbar::-webkit-scrollbar-thumb {
+  background: #1a4a5a;
+  border-radius: 3px;
+}
+.dc-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #2a6a7a;
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }

@@ -7,6 +7,7 @@ export interface FileSystemProvider {
   deleteEntry(dirHandle: FileSystemDirectoryHandle, name: string): Promise<void>;
   createDirectory(dirHandle: FileSystemDirectoryHandle, name: string): Promise<FileSystemDirectoryHandle>;
   renameDirectory(parentHandle: FileSystemDirectoryHandle, oldName: string, newName: string): Promise<void>;
+  canMoveDirectories(parentHandle: FileSystemDirectoryHandle): Promise<boolean>;
   listDirectories(dirHandle: FileSystemDirectoryHandle): Promise<{ name: string; handle: FileSystemDirectoryHandle }[]>;
   listFiles(dirHandle: FileSystemDirectoryHandle): Promise<{ name: string; handle: FileSystemFileHandle }[]>;
   getFileSize(fileHandle: FileSystemFileHandle): Promise<number>;
@@ -66,19 +67,32 @@ export class NativeFileSystemProvider implements FileSystemProvider {
   async renameDirectory(parentHandle: FileSystemDirectoryHandle, oldName: string, newName: string): Promise<void> {
     const oldDir = await parentHandle.getDirectoryHandle(oldName);
 
-    // Try native move/rename first (Chrome 110+) — instant, no data copy
+    // Use native move() — available in Chrome 110+ for local filesystem
+    // This is an instant metadata operation, no data copying
     if (typeof (oldDir as any).move === "function") {
-      await (oldDir as any).move(newName);
-      return;
+      try {
+        await (oldDir as any).move(parentHandle, newName);
+        return;
+      } catch {
+        // move() failed (unsupported filesystem, permissions, etc.)
+        // Try single-arg overload
+        try {
+          await (oldDir as any).move(newName);
+          return;
+        } catch {
+          // Fall through to copy fallback
+        }
+      }
     }
 
     // Fallback: copy all files to new directory and delete old one
+    // WARNING: This is slow for large game folders (GBs of data)
     const newDir = await parentHandle.getDirectoryHandle(newName, { create: true });
-    await this.copyDirectory(oldDir, newDir);
+    await this.copyDirectoryRecursive(oldDir, newDir);
     await parentHandle.removeEntry(oldName, { recursive: true });
   }
 
-  private async copyDirectory(
+  private async copyDirectoryRecursive(
     srcDir: FileSystemDirectoryHandle,
     destDir: FileSystemDirectoryHandle,
   ): Promise<void> {
@@ -91,8 +105,29 @@ export class NativeFileSystemProvider implements FileSystemProvider {
         await writable.close();
       } else if (entry.kind === "directory") {
         const subDir = await destDir.getDirectoryHandle(entryName, { create: true });
-        await this.copyDirectory(entry as FileSystemDirectoryHandle, subDir);
+        await this.copyDirectoryRecursive(entry as FileSystemDirectoryHandle, subDir);
       }
+    }
+  }
+
+  async canMoveDirectories(parentHandle: FileSystemDirectoryHandle): Promise<boolean> {
+    // Test if move() works on this filesystem by creating and moving a temp dir
+    const testName = `__gdtest_${Date.now()}`;
+    try {
+      const testDir = await parentHandle.getDirectoryHandle(testName, { create: true });
+      if (typeof (testDir as any).move !== "function") {
+        await parentHandle.removeEntry(testName);
+        return false;
+      }
+      const testName2 = `${testName}_2`;
+      await (testDir as any).move(parentHandle, testName2);
+      await parentHandle.removeEntry(testName2);
+      return true;
+    } catch {
+      // Clean up both possible names
+      try { await parentHandle.removeEntry(testName); } catch {}
+      try { await parentHandle.removeEntry(`${testName}_2`); } catch {}
+      return false;
     }
   }
 

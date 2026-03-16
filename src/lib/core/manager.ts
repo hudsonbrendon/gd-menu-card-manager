@@ -149,6 +149,7 @@ export interface WriteProgress {
   total: number;
   currentItem: string;
   phase: "renaming" | "writing-names" | "done";
+  canRename?: boolean;
 }
 
 export async function writeChangesToSdCard(
@@ -156,13 +157,8 @@ export async function writeChangesToSdCard(
   items: GdItem[],
   fs: FileSystemProvider,
   onProgress?: (progress: WriteProgress) => void,
-): Promise<void> {
+): Promise<{ skippedRenames: boolean }> {
   const total = items.length;
-
-  // Phase 1: Rename folders to match new ordering
-  // First rename to temp names to avoid conflicts
-  const existingDirs = await fs.listDirectories(rootHandle);
-  const existingNames = new Set(existingDirs.map((d) => d.name));
 
   // Build rename map: current folder name -> desired folder name
   const renameOps: { item: GdItem; targetName: string }[] = [];
@@ -174,45 +170,63 @@ export async function writeChangesToSdCard(
     }
   }
 
+  let skippedRenames = false;
+
+  // Phase 1: Rename folders (only if there are renames and move() is supported)
   if (renameOps.length > 0) {
-    const tempPrefix = "__gdtmp_";
-    const totalSteps = renameOps.length * 2;
+    // Test if native move() works on this filesystem before attempting renames
+    const canMove = await fs.canMoveDirectories(rootHandle);
 
-    // Phase 1a: Rename to temp names to avoid collisions
-    for (let i = 0; i < renameOps.length; i++) {
-      const { item } = renameOps[i];
-      const currentName = item.directoryHandle!.name;
-      const tempName = `${tempPrefix}${currentName}`;
-      onProgress?.({
-        current: i + 1,
-        total: totalSteps,
-        currentItem: `${currentName} → ${tempName}`,
-        phase: "renaming",
-      });
-      if (existingNames.has(currentName)) {
-        await fs.renameDirectory(rootHandle, currentName, tempName);
+    if (canMove) {
+      const existingDirs = await fs.listDirectories(rootHandle);
+      const existingNames = new Set(existingDirs.map((d) => d.name));
+      const tempPrefix = "__gdtmp_";
+      const totalSteps = renameOps.length * 2;
+
+      // Phase 1a: Rename to temp names to avoid collisions
+      for (let i = 0; i < renameOps.length; i++) {
+        const { item } = renameOps[i];
+        const currentName = item.directoryHandle!.name;
+        const tempName = `${tempPrefix}${currentName}`;
+        onProgress?.({
+          current: i + 1,
+          total: totalSteps,
+          currentItem: `${currentName} → ${tempName}`,
+          phase: "renaming",
+        });
+        if (existingNames.has(currentName)) {
+          await fs.renameDirectory(rootHandle, currentName, tempName);
+        }
       }
-    }
 
-    // Phase 1b: Rename from temp to final names
-    for (let i = 0; i < renameOps.length; i++) {
-      const { targetName } = renameOps[i];
-      const currentName = renameOps[i].item.directoryHandle!.name;
-      const tempName = `${tempPrefix}${currentName}`;
-      onProgress?.({
-        current: renameOps.length + i + 1,
-        total: totalSteps,
-        currentItem: `${tempName} → ${targetName}`,
-        phase: "renaming",
-      });
-      await fs.renameDirectory(rootHandle, tempName, targetName);
+      // Phase 1b: Rename from temp to final names
+      for (let i = 0; i < renameOps.length; i++) {
+        const { targetName } = renameOps[i];
+        const currentName = renameOps[i].item.directoryHandle!.name;
+        const tempName = `${tempPrefix}${currentName}`;
+        onProgress?.({
+          current: renameOps.length + i + 1,
+          total: totalSteps,
+          currentItem: `${tempName} → ${targetName}`,
+          phase: "renaming",
+        });
+        await fs.renameDirectory(rootHandle, tempName, targetName);
+      }
+    } else {
+      // move() not supported — skip folder renaming entirely
+      // name.txt files will still be written to existing folders
+      skippedRenames = true;
     }
   }
 
   // Phase 2: Write name.txt for items that have custom names
+  // Use the ACTUAL folder name on disk (original if renames were skipped)
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    const folderName = String(item.folderNumber).padStart(2, "0");
+    const folderName = skippedRenames
+      ? item.directoryHandle?.name || String(item.folderNumber).padStart(2, "0")
+      : String(item.folderNumber).padStart(2, "0");
+
     onProgress?.({
       current: i + 1,
       total,
@@ -231,4 +245,5 @@ export async function writeChangesToSdCard(
   }
 
   onProgress?.({ current: total, total, currentItem: "", phase: "done" });
+  return { skippedRenames };
 }

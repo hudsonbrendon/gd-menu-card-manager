@@ -84,7 +84,7 @@ export function useFileSystem() {
     try {
       setLoading(true, t("fs.saving"));
 
-      await writeChangesToSdCard(currentRootHandle, currentItems, fs, (progress) => {
+      const result = await writeChangesToSdCard(currentRootHandle, currentItems, fs, (progress) => {
         setLoadingProgress((progress.current / progress.total) * 100);
         const phaseLabel = progress.phase === "renaming" ? t("fs.renamingFolders") : t("fs.writingNames");
         useGameStore.getState().setLoading(true, `${phaseLabel}: ${progress.currentItem}`);
@@ -98,6 +98,10 @@ export function useFileSystem() {
       setItems(newItems);
       setLoading(false);
       useGameStore.getState().setSaveSuccess(true);
+
+      if (result.skippedRenames) {
+        setError(t("fs.reorderNotSupported"));
+      }
     } catch (e) {
       setLoading(false);
       setError(e instanceof Error ? e.message : t("fs.saveFailed"));

@@ -175,7 +175,7 @@ export async function writeChangesToSdCard(
   // Phase 1: Rename folders (only if there are renames and move() is supported)
   if (renameOps.length > 0) {
     // Test if native move() works on this filesystem before attempting renames
-    const canMove = await fs.canMoveDirectories(rootHandle);
+    const canMove = await fs.canRenameDirectories(rootHandle);
 
     if (canMove) {
       const existingDirs = await fs.listDirectories(rootHandle);

@@ -175,16 +175,18 @@ export async function writeChangesToSdCard(
   }
 
   if (renameOps.length > 0) {
-    // Rename to temp names first to avoid collisions
     const tempPrefix = "__gdtmp_";
+    const totalSteps = renameOps.length * 2;
+
+    // Phase 1a: Rename to temp names to avoid collisions
     for (let i = 0; i < renameOps.length; i++) {
       const { item } = renameOps[i];
       const currentName = item.directoryHandle!.name;
       const tempName = `${tempPrefix}${currentName}`;
       onProgress?.({
         current: i + 1,
-        total: renameOps.length * 2,
-        currentItem: `Moving ${currentName} → temp`,
+        total: totalSteps,
+        currentItem: `${currentName} → ${tempName}`,
         phase: "renaming",
       });
       if (existingNames.has(currentName)) {
@@ -192,15 +194,15 @@ export async function writeChangesToSdCard(
       }
     }
 
-    // Now rename from temp to final names
+    // Phase 1b: Rename from temp to final names
     for (let i = 0; i < renameOps.length; i++) {
-      const { item, targetName } = renameOps[i];
-      const currentName = item.directoryHandle!.name;
+      const { targetName } = renameOps[i];
+      const currentName = renameOps[i].item.directoryHandle!.name;
       const tempName = `${tempPrefix}${currentName}`;
       onProgress?.({
         current: renameOps.length + i + 1,
-        total: renameOps.length * 2,
-        currentItem: `Moving temp → ${targetName}`,
+        total: totalSteps,
+        currentItem: `${tempName} → ${targetName}`,
         phase: "renaming",
       });
       await fs.renameDirectory(rootHandle, tempName, targetName);

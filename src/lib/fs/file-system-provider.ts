@@ -64,34 +64,24 @@ export class NativeFileSystemProvider implements FileSystemProvider {
   }
 
   async renameDirectory(parentHandle: FileSystemDirectoryHandle, oldName: string, newName: string): Promise<void> {
-    // File System Access API doesn't have a rename operation
-    // We need to copy all files to a new directory and delete the old one
     const oldDir = await parentHandle.getDirectoryHandle(oldName);
-    const newDir = await parentHandle.getDirectoryHandle(newName, { create: true });
 
-    // Copy all entries
-    for await (const [entryName, entry] of oldDir.entries()) {
-      if (entry.kind === "file") {
-        const file = await (entry as FileSystemFileHandle).getFile();
-        const newFileHandle = await newDir.getFileHandle(entryName, { create: true });
-        const writable = await newFileHandle.createWritable();
-        await writable.write(file);
-        await writable.close();
-      } else if (entry.kind === "directory") {
-        await this.copyDirectory(entry as FileSystemDirectoryHandle, newDir, entryName);
-      }
+    // Try native move/rename first (Chrome 110+) — instant, no data copy
+    if (typeof (oldDir as any).move === "function") {
+      await (oldDir as any).move(newName);
+      return;
     }
 
-    // Delete old directory
+    // Fallback: copy all files to new directory and delete old one
+    const newDir = await parentHandle.getDirectoryHandle(newName, { create: true });
+    await this.copyDirectory(oldDir, newDir);
     await parentHandle.removeEntry(oldName, { recursive: true });
   }
 
   private async copyDirectory(
     srcDir: FileSystemDirectoryHandle,
-    destParent: FileSystemDirectoryHandle,
-    name: string,
+    destDir: FileSystemDirectoryHandle,
   ): Promise<void> {
-    const destDir = await destParent.getDirectoryHandle(name, { create: true });
     for await (const [entryName, entry] of srcDir.entries()) {
       if (entry.kind === "file") {
         const file = await (entry as FileSystemFileHandle).getFile();
@@ -100,7 +90,8 @@ export class NativeFileSystemProvider implements FileSystemProvider {
         await writable.write(file);
         await writable.close();
       } else if (entry.kind === "directory") {
-        await this.copyDirectory(entry as FileSystemDirectoryHandle, destDir, entryName);
+        const subDir = await destDir.getDirectoryHandle(entryName, { create: true });
+        await this.copyDirectory(entry as FileSystemDirectoryHandle, subDir);
       }
     }
   }
